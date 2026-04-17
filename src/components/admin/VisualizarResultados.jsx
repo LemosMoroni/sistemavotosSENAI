@@ -1,163 +1,206 @@
-import { useState, useEffect } from 'react';
-import { supabase, obterResultados, obterEstatisticas } from '../../services/supabase';
+import { useState, useEffect, useRef } from 'react';
+import { obterResultadosPorEscola } from '../../services/supabase';
 import './VisualizarResultados.css';
 
+const INTERVALO_MS = 3 * 60 * 1000;
+
 export default function VisualizarResultados() {
-  const [resultados, setResultados] = useState([]);
-  const [estatisticas, setEstatisticas] = useState(null);
+  const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    carregarDados();
-
-    // Atualizar em tempo real
-    const subscription = supabase
-      .channel('votos_realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'votos' },
-        () => {
-          carregarDados();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const [exportando, setExportando] = useState(false);
+  const [ultimaAtualizacao, setUltimaAtualizacao] = useState(null);
+  const [proximaEm, setProximaEm] = useState(INTERVALO_MS / 1000);
+  const intervalRef = useRef(null);
+  const contagemRef = useRef(null);
+  const conteudoRef = useRef(null);
 
   const carregarDados = async () => {
     setCarregando(true);
-
-    const [resResultados, resEstatisticas] = await Promise.all([
-      obterResultados(),
-      obterEstatisticas()
-    ]);
-
-    if (resResultados.sucesso) {
-      setResultados(resResultados.resultados);
+    const resultado = await obterResultadosPorEscola();
+    if (resultado.sucesso) {
+      setDados(resultado);
+      setUltimaAtualizacao(new Date());
     }
-
-    if (resEstatisticas.sucesso) {
-      setEstatisticas(resEstatisticas.estatisticas);
-    }
-
     setCarregando(false);
+    setProximaEm(INTERVALO_MS / 1000);
   };
 
-  if (carregando) {
-    return <div className="carregando">Carregando resultados...</div>;
-  }
+  useEffect(() => {
+    carregarDados();
+    intervalRef.current = setInterval(carregarDados, INTERVALO_MS);
+    contagemRef.current = setInterval(() => {
+      setProximaEm((prev) => (prev > 1 ? prev - 1 : INTERVALO_MS / 1000));
+    }, 1000);
+    return () => {
+      clearInterval(intervalRef.current);
+      clearInterval(contagemRef.current);
+    };
+  }, []);
 
-  const totalVotos = resultados.reduce((acc, r) => acc + r.total_votos, 0);
+  const exportarPDF = async () => {
+    if (!dados || exportando) return;
+    setExportando(true);
+
+    try {
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ]);
+
+      const elemento = conteudoRef.current;
+      const canvas = await html2canvas(elemento, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      let yPos = 0;
+      let paginaAtual = 0;
+
+      while (yPos < imgHeight) {
+        if (paginaAtual > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, -yPos, imgWidth, imgHeight);
+        yPos += pdfHeight;
+        paginaAtual++;
+      }
+
+      const dataHora = new Date().toLocaleString('pt-BR').replace(/[/:]/g, '-').replace(', ', '_');
+      pdf.save(`resultados_votacao_${dataHora}.pdf`);
+    } catch (err) {
+      console.error('Erro ao exportar PDF:', err);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    }
+
+    setExportando(false);
+  };
+
+  const formatarHora = (data) =>
+    data
+      ? data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      : '--';
+
+  const formatarSegundos = (s) => {
+    const m = Math.floor(s / 60);
+    const seg = s % 60;
+    return m > 0 ? `${m}m ${seg}s` : `${seg}s`;
+  };
 
   return (
     <div className="visualizar-resultados">
       <div className="header-secao">
         <div>
           <h2>Resultados da Votação</h2>
-          <p>Atualização em tempo real</p>
+          <p className="info-atualizacao">
+            {ultimaAtualizacao && <>Atualizado às {formatarHora(ultimaAtualizacao)} · </>}
+            Próxima atualização em <strong>{formatarSegundos(proximaEm)}</strong>
+          </p>
         </div>
-        <button onClick={carregarDados} className="btn-atualizar">
-          🔄 Atualizar
-        </button>
+        <div className="header-acoes">
+          <button onClick={carregarDados} className="btn-atualizar" disabled={carregando}>
+            {carregando ? '⏳ Carregando...' : '🔄 Atualizar'}
+          </button>
+          <button
+            onClick={exportarPDF}
+            className="btn-exportar"
+            disabled={exportando || !dados || dados.totalVotos === 0}
+          >
+            {exportando ? '⏳ Gerando...' : '📄 Exportar PDF'}
+          </button>
+        </div>
       </div>
 
-      {/* Estatísticas Gerais */}
-      {estatisticas && (
+      {/* Conteúdo capturado para PDF */}
+      <div ref={conteudoRef}>
+        {/* Cards de resumo */}
         <div className="cards-stats">
-          <div className="stat-card">
-            <div className="stat-icon">👥</div>
-            <div className="stat-info">
-              <h3>{estatisticas.totalEleitores}</h3>
-              <p>Pessoas Votaram</p>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">✅</div>
-            <div className="stat-info">
-              <h3>{estatisticas.totalVotos}</h3>
-              <p>Total de Votos</p>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">📊</div>
-            <div className="stat-info">
-              <h3>100%</h3>
-              <p>Participação</p>
-            </div>
-          </div>
-
           <div className="stat-card">
             <div className="stat-icon">🗳️</div>
             <div className="stat-info">
-              <h3>{Object.keys(estatisticas.votosPorEscola || {}).length}</h3>
+              <h3>{dados?.totalVotos ?? '—'}</h3>
+              <p>Total de Votos</p>
+            </div>
+          </div>
+          <div className="stat-card stat-card-verde">
+            <div className="stat-icon">🏫</div>
+            <div className="stat-info">
+              <h3>{dados?.escolasVotando ?? '—'}</h3>
               <p>Escolas Votando</p>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Resultados por Candidato */}
-      <div className="secao-resultados">
-        <h3>Votos por Candidato</h3>
-        
-        {totalVotos === 0 ? (
-          <div className="sem-votos">
-            <p>Nenhum voto registrado ainda</p>
-          </div>
-        ) : (
-          <div className="lista-resultados">
-            {resultados.map((resultado, index) => (
-              <div key={resultado.candidato_id} className="resultado-item">
-                <div className="resultado-posicao">
-                  {index + 1}º
-                </div>
-                <div className="resultado-info">
-                  <h4>{resultado.candidato_nome}</h4>
-                  <p>{resultado.escola_nome}</p>
-                </div>
-                <div className="resultado-barra">
-                  <div 
-                    className="barra-progresso"
-                    style={{ width: `${resultado.percentual}%` }}
-                  >
-                    <span className="barra-label">
-                      {resultado.percentual}%
-                    </span>
-                  </div>
-                </div>
-                <div className="resultado-votos">
-                  <strong>{resultado.total_votos}</strong>
-                  <small>{resultado.total_votos === 1 ? 'voto' : 'votos'}</small>
-                </div>
+        {carregando && !dados && (
+          <div className="sem-votos"><p>Carregando resultados...</p></div>
+        )}
+
+        {dados?.escolas.map((escola) => (
+          <div key={escola.id} className="secao-escola">
+            <div className="escola-header">
+              <span className="escola-header-nome">🏫 {escola.nome}</span>
+              <span className="escola-header-total">
+                {escola.totalVotos} {escola.totalVotos === 1 ? 'voto' : 'votos'}
+              </span>
+            </div>
+
+            {escola.totalVotos === 0 ? (
+              <p className="sem-votos-escola">Nenhum voto ainda</p>
+            ) : (
+              <div className="lista-candidatos-resultado">
+                {escola.candidatos.map((cand, index) => {
+                  const pct =
+                    escola.totalVotos > 0
+                      ? Math.round((cand.votos / escola.totalVotos) * 100)
+                      : 0;
+                  return (
+                    <div
+                      key={cand.id}
+                      className={`card-candidato-resultado ${index === 0 && cand.votos > 0 ? 'lider' : ''}`}
+                    >
+                      <div className="candidato-foto-resultado">
+                        {cand.foto_url ? (
+                          <img src={cand.foto_url} alt={cand.nome} crossOrigin="anonymous" />
+                        ) : (
+                          <div className="foto-placeholder">👤</div>
+                        )}
+                        {index === 0 && cand.votos > 0 && (
+                          <span className="badge-lider">1º</span>
+                        )}
+                      </div>
+                      <div className="candidato-dados-resultado">
+                        <div className="candidato-nome-resultado">{cand.nome}</div>
+                        <div className="candidato-numero-resultado">Nº {cand.numero}</div>
+                        <div className="barra-wrapper">
+                          <div className="barra-resultado">
+                            <div className="barra-fill" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="pct-label">{pct}%</span>
+                        </div>
+                      </div>
+                      <div className="candidato-votos-resultado">
+                        <strong>{cand.votos}</strong>
+                        <small>{cand.votos === 1 ? 'voto' : 'votos'}</small>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
           </div>
+        ))}
+
+        {dados?.escolas.length === 0 && !carregando && (
+          <div className="sem-votos"><p>Nenhum candidato cadastrado ainda</p></div>
         )}
       </div>
-
-      {/* Votos por Escola */}
-      {estatisticas?.votosPorEscola && Object.keys(estatisticas.votosPorEscola).length > 0 && (
-        <div className="secao-resultados">
-          <h3>Votos por Escola</h3>
-          <div className="lista-escolas-votos">
-            {Object.entries(estatisticas.votosPorEscola).map(([escola, votos]) => (
-              <div key={escola} className="escola-voto-item">
-                <div className="escola-voto-nome">
-                  🏫 {escola}
-                </div>
-                <div className="escola-voto-count">
-                  <strong>{votos}</strong> {votos === 1 ? 'voto' : 'votos'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

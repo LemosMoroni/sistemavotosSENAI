@@ -155,6 +155,55 @@ export async function obterResultados() {
 }
 
 /**
+ * Obter resultados agrupados por escola com fotos dos candidatos
+ */
+export async function obterResultadosPorEscola() {
+  try {
+    const [{ data: candidatos, error: errCand }, { data: votos, error: errVotos }] =
+      await Promise.all([
+        supabase
+          .from('candidatos')
+          .select('id, nome, numero, foto_url, escola_id, escolas(id, nome)')
+          .eq('ativo', true)
+          .order('numero'),
+        supabase.from('votos').select('candidato_id'),
+      ]);
+
+    if (errCand) throw errCand;
+    if (errVotos) throw errVotos;
+
+    const votosPorCandidato = {};
+    votos.forEach((v) => {
+      votosPorCandidato[v.candidato_id] = (votosPorCandidato[v.candidato_id] || 0) + 1;
+    });
+
+    const escolasMap = {};
+    candidatos.forEach((cand) => {
+      const escolaId = cand.escola_id;
+      const escolaNome = cand.escolas?.nome || 'Desconhecida';
+      if (!escolasMap[escolaId]) {
+        escolasMap[escolaId] = { id: escolaId, nome: escolaNome, candidatos: [] };
+      }
+      escolasMap[escolaId].candidatos.push({ ...cand, votos: votosPorCandidato[cand.id] || 0 });
+    });
+
+    const escolas = Object.values(escolasMap).map((escola) => {
+      const ordenados = [...escola.candidatos].sort((a, b) => b.votos - a.votos);
+      const totalEscola = ordenados.reduce((sum, c) => sum + c.votos, 0);
+      return { ...escola, candidatos: ordenados, totalVotos: totalEscola };
+    });
+
+    const totalVotos = votos.length;
+    const escolasVotando = escolas.filter((e) => e.totalVotos > 0).length;
+
+    return { sucesso: true, escolas, totalVotos, escolasVotando };
+  } catch (error) {
+    console.error('Erro ao obter resultados por escola:', error);
+    return { sucesso: false, escolas: [], totalVotos: 0, escolasVotando: 0 };
+  }
+}
+
+/**
  * Obter estatísticas gerais
  */
 export async function obterEstatisticas() {
