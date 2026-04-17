@@ -1,0 +1,166 @@
+.painel-admin {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.admin-header {
+  background: #1e293b;
+  color: white;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-admin {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.logo-admin .icon {
+  font-size: 40px;
+  flex-shrink: 0;
+}
+
+.logo-admin h1 {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.logo-admin p {
+  font-size: 13px;
+  margin: 3px 0 0 0;
+  opacity: 0.8;
+}
+
+.btn-sair {
+  padding: 9px 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.btn-sair:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+  background: white;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+.admin-tabs button {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.admin-tabs button:hover {
+  background: #f5f5f5;
+  color: #1e293b;
+}
+
+.admin-tabs button.ativo {
+  background: #1e293b;
+  color: white;
+}
+
+.admin-content {
+  background: white;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-height: 500px;
+}
+
+@media (max-width: 768px) {
+  .logo-admin h1 {
+    font-size: 17px;
+  }
+
+  .logo-admin .icon {
+    font-size: 32px;
+  }
+
+  .admin-tabs {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .admin-tabs button {
+    padding: 10px 8px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .admin-content {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-admin p {
+    display: none;
+  }
+
+  .logo-admin h1 {
+    font-size: 15px;
+  }
+
+  .header-content {
+    padding: 12px 16px;
+  }
+
+  .admin-container {
+    padding: 16px 12px;
+  }
+
+  .admin-tabs button {
+    font-size: 11px;
+    padding: 9px 6px;
+  }
+}

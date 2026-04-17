@@ -1,0 +1,83 @@
+.lista-votos {
+  width: 100%;
+}
+
+.header-lista {
+  margin-bottom: 24px;
+}
+
+.header-lista h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+}
+
+.header-lista p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.tabela-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tabela-votos {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-votos thead {
+  background: #f8f8f8;
+}
+
+.tabela-votos th {
+  padding: 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tabela-votos tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s;
+}
+
+.tabela-votos tbody tr:hover {
+  background: #f8f8f8;
+}
+
+.tabela-votos td {
+  padding: 16px;
+  font-size: 14px;
+  color: #333;
+}
+
+.cpf-cell code {
+  background: #f0f0f0;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #667eea;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .tabela-votos {
+    font-size: 12px;
+  }
+
+  .tabela-votos th,
+  .tabela-votos td {
+    padding: 12px 8px;
+  }
+}
