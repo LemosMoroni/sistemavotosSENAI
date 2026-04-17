@@ -11,8 +11,8 @@ function App() {
   const [cpf, setCpf] = useState('');
   const [escola, setEscola] = useState('');
 
-  // Verificar se está acessando /admin
-  const isAdmin = window.location.pathname === '/admin';
+  // Verificar se está acessando /admin (funciona local e no GitHub Pages)
+  const isAdmin = window.location.pathname.endsWith('/admin');
 
   if (isAdmin) {
     return <PainelAdmin />;

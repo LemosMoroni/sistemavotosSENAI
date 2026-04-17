@@ -3,8 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <script>
-      var path = window.location.pathname.replace('/sistemavotosSENAI', '');
-      sessionStorage.setItem('redirect', path);
+      sessionStorage.setItem('redirect', window.location.pathname + window.location.search);
       window.location.replace('/sistemavotosSENAI/');
     </script>
   </head>
