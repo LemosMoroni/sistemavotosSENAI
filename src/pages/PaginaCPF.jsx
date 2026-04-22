@@ -134,7 +134,7 @@ export default function PaginaCPF({ onCPFValido }) {
         </div>
 
         <div className="footer-senai">
-          <p>Desenvolvido no <span>SENAI - Correia Pinto</span></p>
+          <p>Desenvolvido no <span>SENAI - Correia Pinto por Vitor Lemos Moroni</span></p>
         </div>
       </div>
     </div>
