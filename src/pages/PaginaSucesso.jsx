@@ -4,6 +4,7 @@ export default function PaginaSucesso() {
   return (
     <div className="pagina-sucesso">
       <div className="container-sucesso">
+        <img src="/vereador-mirim.png" alt="Vereador Mirim 2026" className="logo-img-sucesso" />
         <div className="icone-sucesso">✓</div>
         <h1>Voto Computado!</h1>
         <p className="mensagem">Seu voto foi registrado com sucesso.</p>
@@ -22,7 +23,7 @@ export default function PaginaSucesso() {
         </button>
 
         <div className="footer-senai">
-          <p>Desenvolvido no <span>SENAI – Otacílio Costa</span></p>
+          <p>Desenvolvido no <span>SENAI - Correia Pinto</span></p>
         </div>
       </div>
     </div>

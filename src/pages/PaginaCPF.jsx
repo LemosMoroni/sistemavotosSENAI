@@ -22,7 +22,11 @@ export default function PaginaCPF({ onCPFValido }) {
   useEffect(() => {
     buscarEscolas().then((resultado) => {
       if (resultado.sucesso) {
-        setEscolas(resultado.escolas);
+        const lista = resultado.escolas;
+        if (import.meta.env.DEV) {
+          lista.push({ id: '__teste__', nome: '⚙️ Escola Teste (DEV)' });
+        }
+        setEscolas(lista);
       }
     });
   }, []);
@@ -49,6 +53,11 @@ export default function PaginaCPF({ onCPFValido }) {
       return;
     }
 
+    if (import.meta.env.DEV && cpf === '11111111111') {
+      onCPFValido(cpf, escolaSelecionada);
+      return;
+    }
+
     if (!validarCPF(cpf)) {
       setErro('CPF inválido. Verifique os dígitos.');
       return;
@@ -71,9 +80,9 @@ export default function PaginaCPF({ onCPFValido }) {
   return (
     <div className="pagina-cpf">
       <div className="container">
-        <div className="logo">🗳️</div>
-        <h1>Sistema de Votação</h1>
-        <p className="subtitulo">Vereador Mirim 2026</p>
+        <div className="logo">
+          <img src="/vereador-mirim.png" alt="Vereador Mirim 2026" className="logo-img" />
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -125,7 +134,7 @@ export default function PaginaCPF({ onCPFValido }) {
         </div>
 
         <div className="footer-senai">
-          <p>Desenvolvido no <span>SENAI – Otacílio Costa</span></p>
+          <p>Desenvolvido no <span>SENAI - Correia Pinto</span></p>
         </div>
       </div>
     </div>

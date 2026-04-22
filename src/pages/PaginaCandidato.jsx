@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { buscarCandidatosPorEscola, registrarVoto } from '../services/supabase';
+import { tocarSomUrna } from '../utils/somUrna';
 import './PaginaCandidato.css';
 
 export default function PaginaCandidato({ cpf, escola, onVotoConfirmado }) {
@@ -14,24 +15,38 @@ export default function PaginaCandidato({ cpf, escola, onVotoConfirmado }) {
 
   const carregarCandidatos = async () => {
     setCarregando(true);
+
+    if (import.meta.env.DEV && escola.id === '__teste__') {
+      setCandidatos([
+        { id: '__cand1__', nome: 'Aluno Teste A', numero: 1, foto_url: null, escola_id: '__teste__' },
+        { id: '__cand2__', nome: 'Aluno Teste B', numero: 2, foto_url: null, escola_id: '__teste__' },
+      ]);
+      setCarregando(false);
+      return;
+    }
+
     const resultado = await buscarCandidatosPorEscola(escola.id);
-    if (resultado.sucesso && resultado.candidatos.length > 0) {
+    if (resultado.sucesso) {
       setCandidatos(resultado.candidatos);
-      // Selecionar primeiro candidato automaticamente
-      setCandidatoSelecionado(resultado.candidatos[0]);
     }
     setCarregando(false);
   };
 
   const handleConfirmar = async () => {
-    if (!candidatoSelecionado) return;
+    if (!candidatoSelecionado || votando) return;
 
     if (window.confirm(`Confirma seu voto em ${candidatoSelecionado.nome}?`)) {
       setVotando(true);
-      
+
+      if (import.meta.env.DEV && candidatoSelecionado.id.startsWith('__')) {
+        tocarSomUrna();
+        onVotoConfirmado();
+        return;
+      }
+
       const resultado = await registrarVoto(cpf, candidatoSelecionado.id);
-      
       if (resultado.sucesso) {
+        tocarSomUrna();
         onVotoConfirmado();
       } else {
         alert(resultado.mensagem || 'Erro ao registrar voto');
@@ -44,9 +59,7 @@ export default function PaginaCandidato({ cpf, escola, onVotoConfirmado }) {
     return (
       <div className="pagina-candidato">
         <div className="container-candidato">
-          <div className="header-candidato">
-            <h2>Carregando candidatos...</h2>
-          </div>
+          <p className="msg-carregando">Carregando candidatos...</p>
         </div>
       </div>
     );
@@ -57,13 +70,11 @@ export default function PaginaCandidato({ cpf, escola, onVotoConfirmado }) {
       <div className="pagina-candidato">
         <div className="container-candidato">
           <div className="header-candidato">
+            <img src="/vereador-mirim.png" alt="Vereador Mirim 2026" className="logo-img-topo" />
             <h2>Nenhum candidato encontrado</h2>
             <p>Não há candidatos cadastrados para esta escola.</p>
           </div>
-          <button
-            className="btn-voltar"
-            onClick={() => window.location.reload()}
-          >
+          <button className="btn-voltar" onClick={() => window.location.reload()}>
             ← Voltar
           </button>
         </div>
@@ -74,64 +85,56 @@ export default function PaginaCandidato({ cpf, escola, onVotoConfirmado }) {
   return (
     <div className="pagina-candidato">
       <div className="container-candidato">
+        <button
+          className="btn-voltar"
+          onClick={() => window.location.reload()}
+          disabled={votando}
+        >
+          ← Voltar
+        </button>
+
         <div className="header-candidato">
-          <h2>Confirme seu voto</h2>
-          <p>Revise os dados do candidato antes de confirmar</p>
+          <img src="/vereador-mirim.png" alt="Vereador Mirim 2026" className="logo-img-topo" />
+          <h2>Escolha seu candidato</h2>
+          <p className="escola-label">🏫 {escola.nome}</p>
         </div>
 
-        {candidatos.length > 1 && (
-          <div className="seletor-candidatos">
-            {candidatos.map((candidato) => (
+        <div className="grade-candidatos">
+          {candidatos.map((candidato) => {
+            const selecionado = candidatoSelecionado?.id === candidato.id;
+            return (
               <button
                 key={candidato.id}
-                className={`mini-card ${candidatoSelecionado?.id === candidato.id ? 'ativo' : ''}`}
-                onClick={() => setCandidatoSelecionado(candidato)}
+                className={`card-candidato ${selecionado ? 'selecionado' : ''}`}
+                onClick={() => setCandidatoSelecionado(selecionado ? null : candidato)}
+                disabled={votando}
               >
-                <div className="mini-numero">Nº {candidato.numero}</div>
-                <div className="mini-nome">{candidato.nome}</div>
+                {selecionado && <span className="badge-check">✓</span>}
+                <div className="card-foto">
+                  {candidato.foto_url ? (
+                    <img src={candidato.foto_url} alt={candidato.nome} />
+                  ) : (
+                    <div className="card-foto-placeholder">{candidato.nome.charAt(0)}</div>
+                  )}
+                </div>
+                <div className="card-numero">Nº {candidato.numero}</div>
+                <div className="card-nome">{candidato.nome}</div>
               </button>
-            ))}
-          </div>
-        )}
-
-        <div className="candidato-card">
-          <div className="candidato-foto">
-            {candidatoSelecionado.foto_url ? (
-              <img src={candidatoSelecionado.foto_url} alt={candidatoSelecionado.nome} />
-            ) : (
-              <div className="foto-placeholder">
-                {candidatoSelecionado.nome.charAt(0)}
-              </div>
-            )}
-          </div>
-
-          <div className="candidato-info">
-            {candidatoSelecionado.numero && (
-              <div className="candidato-numero">Nº {candidatoSelecionado.numero}</div>
-            )}
-            <h3 className="candidato-nome">{candidatoSelecionado.nome}</h3>
-            <p className="candidato-escola">
-              <span className="icon">🏫</span>
-              {escola.nome}
-            </p>
-          </div>
+            );
+          })}
         </div>
+
+        {!candidatoSelecionado && (
+          <p className="dica-selecao">Toque em um candidato para selecioná-lo</p>
+        )}
 
         <div className="acoes">
           <button
             className="btn-confirmar"
             onClick={handleConfirmar}
-            disabled={votando}
+            disabled={!candidatoSelecionado || votando}
           >
-            {votando ? 'Confirmando...' : '✓ Confirmar Voto'}
-          </button>
-
-          <button
-            className="btn-voltar"
-            onClick={() => window.location.reload()}
-            disabled={votando}
-          >
-            ← Voltar
+            {votando ? 'Confirmando...' : `✓ Votar em ${candidatoSelecionado?.nome ?? '...'}`}
           </button>
         </div>
 
@@ -140,7 +143,7 @@ export default function PaginaCandidato({ cpf, escola, onVotoConfirmado }) {
         </div>
 
         <div className="footer-senai">
-          <p>Desenvolvido no <span>SENAI – Otacílio Costa</span></p>
+          <p>Desenvolvido no <span>SENAI - Correia Pinto</span></p>
         </div>
       </div>
     </div>

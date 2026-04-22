@@ -10,16 +10,23 @@
 .pagina-cpf .container {
   background: white;
   border-radius: 20px;
-  padding: 48px 40px;
+  padding: 24px 32px;
   max-width: 440px;
   width: 100%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .pagina-cpf .logo {
-  font-size: 64px;
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
+}
+
+.pagina-cpf .logo-img {
+  width: 300px;
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
 }
 
 .pagina-cpf h1 {
@@ -38,7 +45,7 @@
 }
 
 .pagina-cpf .input-group {
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 
 .pagina-cpf .input-group label {
@@ -51,8 +58,8 @@
 
 .pagina-cpf .input-group input {
   width: 100%;
-  padding: 16px;
-  font-size: 18px;
+  padding: 12px;
+  font-size: 17px;
   border: 2px solid #e0e0e0;
   border-radius: 12px;
   transition: all 0.3s;
@@ -73,7 +80,7 @@
 
 .pagina-cpf button[type="submit"] {
   width: 100%;
-  padding: 16px;
+  padding: 13px;
   font-size: 16px;
   font-weight: 600;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -107,15 +114,15 @@
 }
 
 .pagina-cpf .info {
-  margin-top: 24px;
-  padding-top: 20px;
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid #e0e0e0;
 }
 
 .pagina-cpf .info p {
   color: #666;
-  font-size: 14px;
-  margin: 8px 0;
+  font-size: 13px;
+  margin: 5px 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -123,7 +130,7 @@
 
 .pagina-cpf .select-escola {
   width: 100%;
-  padding: 14px 16px;
+  padding: 11px 16px;
   font-size: 15px;
   border: 2px solid #e0e0e0;
   border-radius: 12px;

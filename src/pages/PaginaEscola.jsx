@@ -74,7 +74,7 @@ export default function PaginaEscola({ onEscolaSelecionada }) {
         </button>
 
         <div className="footer-senai">
-          <p>Desenvolvido no <span>SENAI – Otacílio Costa</span></p>
+          <p>Desenvolvido no <span>SENAI - Correia Pinto</span></p>
         </div>
       </div>
     </div>
