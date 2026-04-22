@@ -79,4 +79,4 @@ src/
 
 ---
 
-Desenvolvido no **SENAI – Otacílio Costa**
+Desenvolvido no **SENAI – Correia Pinto por Vitor Lemos Moroni**
